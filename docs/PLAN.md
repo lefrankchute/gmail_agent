@@ -419,6 +419,8 @@ Se abre un asistente de 4 pasos:
 
 **Nota:** Se ejecuta manualmente una sola vez. Puede pausarse y reanudarse.
 
+- [ ] **Fase 5 completada**
+
 ### Entregables
 
 **5.1 — Job de procesamiento histórico**
@@ -458,6 +460,8 @@ Se abre un asistente de 4 pasos:
 **Objetivo:** Panel web para monitorear agentes, revisar clasificaciones, y consultar informes financieros.
 
 **Duración estimada:** 4-5 días
+
+- [ ] **Fase 6 completada**
 
 ### Entregables
 
@@ -501,6 +505,8 @@ Se abre un asistente de 4 pasos:
 **Objetivo:** El sistema corre 24/7 en el VPS, con HTTPS y reinicio automático ante fallos.
 
 **Duración estimada:** 1-2 días
+
+- [ ] **Fase 7 completada**
 
 ### Entregables
 
