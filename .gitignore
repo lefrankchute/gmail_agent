@@ -5,3 +5,9 @@ dist/
 .DS_Store
 *.log
 .pnpm-store/
+
+# Credenciales — NUNCA en el repositorio
+credentials.json
+*credentials*.json
+token.json
+*token*.json
