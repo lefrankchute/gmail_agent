@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Email {
+  id            String        @id
+  threadId      String
+  subject       String
+  sender        String
+  senderDomain  String
+  receivedAt    DateTime
+  labels        String[]
+  action        EmailAction
+  category      String?
+  subCategory   String?
+  confidence    Float
+  reasoning     String?
+  processedAt   DateTime      @default(now())
+  isHistorical  Boolean       @default(false)
+  transactions  Transaction[]
+
+  @@map("emails")
+}
+
+model Transaction {
+  id              String      @id @default(uuid())
+  emailId         String
+  email           Email       @relation(fields: [emailId], references: [id])
+  bank            String
+  amount          Decimal     @db.Decimal(18, 2)
+  currency        String      @db.VarChar(3)
+  amountCop       Decimal     @db.Decimal(18, 2)
+  exchangeRate    Decimal     @db.Decimal(10, 4)
+  accountType     String
+  merchant        String?
+  transactionType String
+  category        String?
+  transactionDate DateTime
+  extractedAt     DateTime    @default(now())
+
+  @@map("transactions")
+}
+
+model DailySummary {
+  id                String    @id @default(uuid())
+  summaryDate       DateTime  @unique @db.Date
+  contentJson       Json
+  telegramMessage   String
+  sentAt            DateTime?
+  emailCount        Int       @default(0)
+  personalCount     Int       @default(0)
+  summaryCount      Int       @default(0)
+  unclassifiedCount Int       @default(0)
+
+  @@map("daily_summaries")
+}
+
+model MonthlyReport {
+  id                String    @id @default(uuid())
+  year              Int
+  month             Int
+  totalCop          Decimal   @db.Decimal(18, 2)
+  byBank            Json
+  byAccountType     Json
+  byCategory        Json
+  transactionsCount Int
+  generatedAt       DateTime  @default(now())
+
+  @@unique([year, month])
+  @@map("monthly_reports")
+}
+
+model ClassificationRule {
+  id           String      @id @default(uuid())
+  senderDomain String?
+  senderEmail  String?
+  gmailLabel   String?
+  action       EmailAction
+  category     String
+  priority     Int         @default(0)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+
+  @@map("classification_rules")
+}
+
+model ProcessLog {
+  id        String    @id @default(uuid())
+  service   String
+  level     String
+  message   String
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  @@map("process_logs")
+}
+
+enum EmailAction {
+  PERSONAL
+  SUMMARY
+  ARCHIVE
+  UNCLASSIFIED
+}
