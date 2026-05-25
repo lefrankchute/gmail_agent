@@ -169,14 +169,16 @@ Se abre un asistente de 4 pasos:
 
 **Duración estimada:** 2-3 días
 
+- [ ] **Fase 1 completada**
+
 ### Entregables
 
 **1.1 — Monorepo configurado**
-- [ ] Repositorio git inicializado
-- [ ] pnpm workspaces configurado con los 8 packages
-- [ ] TypeScript base compartido (tsconfig raíz)
-- [ ] ESLint + Prettier configurados
-- [ ] Estructura de carpetas creada:
+- [x] Repositorio git inicializado
+- [x] pnpm workspaces configurado con los 8 packages
+- [x] TypeScript base compartido (tsconfig raíz)
+- [x] ESLint + Prettier configurados
+- [x] Estructura de carpetas creada:
   ```
   gmail-agent/
   ├── packages/
@@ -226,6 +228,8 @@ Se abre un asistente de 4 pasos:
 **Objetivo:** El sistema puede leer correos de Gmail, clasificarlos con IA y registrar las acciones en base de datos.
 
 **Duración estimada:** 3-4 días
+
+- [ ] **Fase 2 completada**
 
 ### Entregables
 
@@ -278,6 +282,8 @@ Se abre un asistente de 4 pasos:
 **Objetivo:** Telegram recibe alertas inmediatas y el resumen diario de las 7am.
 
 **Duración estimada:** 2 días
+
+- [ ] **Fase 3 completada**
 
 ### Entregables
 
@@ -343,6 +349,8 @@ Se abre un asistente de 4 pasos:
 **Objetivo:** Los correos de bancos y pagos alimentan un registro financiero consultable, con balance mensual automático.
 
 **Duración estimada:** 3-4 días
+
+- [ ] **Fase 4 completada**
 
 ### Entregables
 
