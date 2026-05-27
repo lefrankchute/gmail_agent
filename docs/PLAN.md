@@ -169,7 +169,7 @@ Se abre un asistente de 4 pasos:
 
 **Duración estimada:** 2-3 días
 
-- [ ] **Fase 1 completada**
+- [x] **Fase 1 completada**
 
 ### Entregables
 
@@ -196,27 +196,27 @@ Se abre un asistente de 4 pasos:
   ```
 
 **1.2 — Infraestructura local con Docker Compose**
-- [ ] `docker-compose.yml` con PostgreSQL y Redis corriendo
-- [ ] PostgreSQL accesible en puerto 5432
-- [ ] Redis accesible en puerto 6379
-- [ ] Variables de entorno documentadas en `.env.example`
+- [x] `docker-compose.yml` con PostgreSQL y Redis corriendo
+- [x] PostgreSQL accesible en puerto 5432
+- [x] Redis accesible en puerto 6379
+- [x] Variables de entorno documentadas en `.env.example`
 
 **1.3 — Base de datos**
-- [ ] Schema Prisma definido con todas las tablas:
+- [x] Schema Prisma definido con todas las tablas:
   - `emails`
   - `transactions`
   - `daily_summaries`
   - `monthly_reports`
   - `classification_rules`
   - `process_logs`
-- [ ] Migración inicial ejecutada correctamente
-- [ ] Prisma Client generado
+- [x] Migración inicial ejecutada correctamente
+- [x] Prisma Client generado
 
 **1.4 — Contratos del sistema (package `shared`)**
-- [ ] Interface `NotificationProvider` definida
-- [ ] Tipos base: `ClassificationResult`, `Transaction`, `EmailAction`
-- [ ] Enum `EmailAction`: `PERSONAL | SUMMARY | ARCHIVE | UNCLASSIFIED`
-- [ ] Compilación del package `shared` sin errores
+- [x] Interface `NotificationProvider` definida
+- [x] Tipos base: `ClassificationResult`, `Transaction`, `EmailAction`
+- [x] Enum `EmailAction`: `PERSONAL | SUMMARY | ARCHIVE | UNCLASSIFIED`
+- [x] Compilación del package `shared` sin errores
 
 **Criterio de éxito de Fase 1:**
 > Ejecutar `docker compose up` levanta PostgreSQL y Redis. Ejecutar `pnpm build` en el monorepo compila sin errores. Las tablas existen en la base de datos.

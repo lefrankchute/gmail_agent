@@ -7,12 +7,22 @@
     "dev": "pnpm -r --parallel dev",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint packages/*/src/**/*.ts",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "infra:up": "docker compose -f infrastructure/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infrastructure/docker-compose.yml down",
+    "infra:logs": "docker compose -f infrastructure/docker-compose.yml logs -f",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "devDependencies": {
     "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "prisma": "^6.19.3",
     "typescript": "^5.8.0",
-    "typescript-eslint": "^8.0.0",
-    "prettier": "^3.0.0"
+    "typescript-eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
   }
 }
