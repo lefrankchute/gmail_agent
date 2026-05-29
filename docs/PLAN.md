@@ -258,6 +258,7 @@ Se abre un asistente de 4 pasos:
 - [x] Si `confidence < 0.7` → marcado como `UNCLASSIFIED`
 - [x] Acciones ejecutadas automáticamente en Gmail post-clasificación (vía cola `email:classified`)
 - [x] Resultados guardados en tabla `emails`
+- [x] Manejo de errores fatales de Anthropic (sin crédito, API key inválida): job marcado `UnrecoverableError`, no se reintenta
 
 **2.4 — Clasificación especial: Bancos**
 - [x] Claude analiza contenido completo del email bancario

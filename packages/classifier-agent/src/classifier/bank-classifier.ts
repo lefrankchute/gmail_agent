@@ -7,8 +7,9 @@ import {
   type TransactionJobData,
 } from '@gmail-agent/shared';
 import { BANK_SYSTEM_PROMPT } from './prompts';
+import { isFatalApiError, fatalErrorMessage } from './claude-errors';
+import { parseClaudeJson } from './parse-json';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const BODY_MAX_CHARS = 4000;
 
 const ACTION_MAP: Record<BankSubCategory, EmailAction> = {
@@ -25,86 +26,102 @@ export interface BankAnalysisResult {
   isUrgent: boolean;
 }
 
+let _client: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (!_client) _client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _client;
+}
+
 export async function analyzeBankEmail(email: EmailJob): Promise<BankAnalysisResult> {
   const body = email.body.slice(0, BODY_MAX_CHARS);
 
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
-    system: [
-      {
-        type: 'text',
-        text: BANK_SYSTEM_PROMPT,
-        cache_control: { type: 'ephemeral' },
-      },
-    ],
-    messages: [
-      { role: 'user', content: `Asunto: ${email.subject}\nDe: ${email.sender}\n\n${body}` },
-    ],
-  });
-
-  const text = response.content.find(c => c.type === 'text')?.text ?? '{}';
+  const FALLBACK_ERROR: BankAnalysisResult = {
+    classification: {
+      action: EmailAction.SUMMARY,
+      category: 'banco',
+      confidence: 0,
+      reasoning: 'Error al analizar email bancario',
+      subCategory: BankSubCategory.OTHER,
+    },
+    isUrgent: false,
+  };
 
   try {
-    const result = JSON.parse(text) as {
-      subCategory?: string;
-      confidence?: number;
-      reasoning?: string;
-      transactionData?: {
-        amount?: number;
-        currency?: string;
-        merchant?: string;
-        bank?: string;
-        accountType?: string;
-        transactionType?: string;
-        transactionDate?: string;
+    const response = await getClient().messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 512,
+      system: [
+        {
+          type: 'text',
+          text: BANK_SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [
+        { role: 'user', content: `Asunto: ${email.subject}\nDe: ${email.sender}\n\n${body}` },
+      ],
+    });
+
+    const text = response.content.find(c => c.type === 'text')?.text ?? '{}';
+
+    try {
+      const result = parseClaudeJson<{
+        subCategory?: string;
+        confidence?: number;
+        reasoning?: string;
+        transactionData?: {
+          amount?: number;
+          currency?: string;
+          merchant?: string;
+          bank?: string;
+          accountType?: string;
+          transactionType?: string;
+          transactionDate?: string;
+        };
+      }>(text);
+
+      const subCategory = Object.values(BankSubCategory).includes(result.subCategory as BankSubCategory)
+        ? (result.subCategory as BankSubCategory)
+        : BankSubCategory.OTHER;
+
+      const confidence = typeof result.confidence === 'number' ? result.confidence : 0.5;
+      const action = ACTION_MAP[subCategory];
+      const isUrgent = subCategory === BankSubCategory.FRAUD;
+
+      let transactionData: TransactionJobData | undefined;
+      if (subCategory === BankSubCategory.TRANSACTION && result.transactionData) {
+        const td = result.transactionData;
+        transactionData = {
+          emailId: email.id,
+          bank: td.bank ?? email.senderDomain,
+          amount: td.amount ?? 0,
+          currency: td.currency ?? 'COP',
+          merchant: td.merchant,
+          accountType: td.accountType ?? 'cuenta_ahorros',
+          transactionType: td.transactionType ?? 'compra',
+          transactionDate: td.transactionDate ?? email.receivedAt,
+        };
+      }
+
+      return {
+        classification: {
+          action,
+          category: 'banco',
+          confidence,
+          reasoning: result.reasoning ?? '',
+          subCategory,
+        },
+        transactionData,
+        isUrgent,
       };
-    };
-
-    const subCategory = Object.values(BankSubCategory).includes(result.subCategory as BankSubCategory)
-      ? (result.subCategory as BankSubCategory)
-      : BankSubCategory.OTHER;
-
-    const confidence = typeof result.confidence === 'number' ? result.confidence : 0.5;
-    const action = ACTION_MAP[subCategory];
-    const isUrgent = subCategory === BankSubCategory.FRAUD;
-
-    let transactionData: TransactionJobData | undefined;
-    if (subCategory === BankSubCategory.TRANSACTION && result.transactionData) {
-      const td = result.transactionData;
-      transactionData = {
-        emailId: email.id,
-        bank: td.bank ?? email.senderDomain,
-        amount: td.amount ?? 0,
-        currency: td.currency ?? 'COP',
-        merchant: td.merchant,
-        accountType: td.accountType ?? 'cuenta_ahorros',
-        transactionType: td.transactionType ?? 'compra',
-        transactionDate: td.transactionDate ?? email.receivedAt,
-      };
+    } catch {
+      return FALLBACK_ERROR;
     }
-
-    return {
-      classification: {
-        action,
-        category: 'banco',
-        confidence,
-        reasoning: result.reasoning ?? '',
-        subCategory,
-      },
-      transactionData,
-      isUrgent,
-    };
-  } catch {
-    return {
-      classification: {
-        action: EmailAction.SUMMARY,
-        category: 'banco',
-        confidence: 0,
-        reasoning: 'Error al analizar email bancario',
-        subCategory: BankSubCategory.OTHER,
-      },
-      isUrgent: false,
-    };
+  } catch (err) {
+    if (isFatalApiError(err)) {
+      console.error(`[bank-classifier] Fatal API error: ${fatalErrorMessage(err)}`);
+      return { ...FALLBACK_ERROR, classification: { ...FALLBACK_ERROR.classification, reasoning: fatalErrorMessage(err) } };
+    }
+    throw err;
   }
 }

@@ -111,9 +111,9 @@ export interface UrgentNotificationData {
 }
 
 export const QUEUE_NAMES = {
-  EMAIL_NEW: 'email:new',
-  EMAIL_CLASSIFIED: 'email:classified',
-  TRANSACTION_NEW: 'transaction:new',
-  NOTIFICATION_URGENT: 'notification:urgent',
-  NOTIFICATION_SEND: 'notification:send',
+  EMAIL_NEW: 'email.new',
+  EMAIL_CLASSIFIED: 'email.classified',
+  TRANSACTION_NEW: 'transaction.new',
+  NOTIFICATION_URGENT: 'notification.urgent',
+  NOTIFICATION_SEND: 'notification.send',
 } as const;

@@ -6,4 +6,4 @@ import { startClassifierWorker } from './workers/classifier.worker';
 
 console.log('[classifier-agent] Starting...');
 startClassifierWorker();
-console.log('[classifier-agent] Ready — listening on queue email:new');
+console.log('[classifier-agent] Ready — listening on queue email.new');

@@ -1,4 +1,4 @@
-import { Queue, Worker, type Job } from 'bullmq';
+import { Queue, Worker, UnrecoverableError, type Job } from 'bullmq';
 import { EmailAction as DBEmailAction } from '@prisma/client';
 import {
   QUEUE_NAMES,
@@ -12,6 +12,7 @@ import { applyQuickRules } from '../rules/quick-rules';
 import { classifyWithClaude } from '../classifier/claude-classifier';
 import { analyzeBankEmail } from '../classifier/bank-classifier';
 import { detectAirlineTicket } from '../classifier/airline-classifier';
+import { isFatalApiError, fatalErrorMessage } from '../classifier/claude-errors';
 
 function getConnectionOptions(): { host: string; port: number } {
   const url = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
@@ -34,6 +35,7 @@ export function startClassifierWorker(): void {
   const worker = new Worker<EmailJob>(
     QUEUE_NAMES.EMAIL_NEW,
     async (job: Job<EmailJob>) => {
+      try {
       const email = job.data;
 
       // Dedup check — second line of defense after Redis set in ingestion
@@ -135,8 +137,14 @@ export function startClassifierWorker(): void {
       console.log(
         `[classifier] ${email.id} → ${classification.action} | ${classification.category} | ${(classification.confidence * 100).toFixed(0)}%`
       );
+      } catch (err) {
+        if (isFatalApiError(err)) {
+          throw new UnrecoverableError(fatalErrorMessage(err));
+        }
+        throw err;
+      }
     },
-    { connection: conn, concurrency: 3 }
+    { connection: conn, concurrency: 1 }
   );
 
   worker.on('failed', (job, err) => {
