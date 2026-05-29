@@ -10,7 +10,11 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@gmail-agent/shared": "workspace:*"
+    "@anthropic-ai/sdk": "^0.55.0",
+    "@gmail-agent/shared": "workspace:*",
+    "@prisma/client": "^6.19.3",
+    "bullmq": "^5.0.0",
+    "dotenv": "^16.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

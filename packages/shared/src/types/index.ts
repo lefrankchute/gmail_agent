@@ -62,3 +62,58 @@ export interface EmailMetadata {
   receivedAt: Date;
   body?: string;
 }
+
+// Queue message types (receivedAt as ISO string for JSON serialization)
+export interface EmailJob {
+  id: string;
+  threadId: string;
+  subject: string;
+  sender: string;
+  senderDomain: string;
+  snippet: string;
+  labels: string[];
+  receivedAt: string;
+  body: string;
+  bodyHtml?: string;
+}
+
+export interface ClassifiedEmailJob {
+  emailId: string;
+  action: EmailAction;
+}
+
+export interface TransactionJobData {
+  emailId: string;
+  bank: string;
+  amount: number;
+  currency: string;
+  merchant?: string;
+  accountType: string;
+  transactionType: string;
+  transactionDate: string;
+}
+
+export interface FlightData {
+  airline: string;
+  origin: string;
+  destination: string;
+  departureDate: string;
+  reservationCode?: string;
+  flightNumber?: string;
+}
+
+export interface UrgentNotificationData {
+  emailId: string;
+  type: 'fraud' | 'airline_ticket';
+  subject: string;
+  sender: string;
+  flightData?: FlightData;
+}
+
+export const QUEUE_NAMES = {
+  EMAIL_NEW: 'email:new',
+  EMAIL_CLASSIFIED: 'email:classified',
+  TRANSACTION_NEW: 'transaction:new',
+  NOTIFICATION_URGENT: 'notification:urgent',
+  NOTIFICATION_SEND: 'notification:send',
+} as const;

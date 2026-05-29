@@ -1,3 +1,3 @@
-import { EmailAction } from '@gmail-agent/shared';
-
-console.log('email-ingestion service starting...', EmailAction.ARCHIVE);
+export { GmailClient } from './gmail/client';
+export { createOAuth2Client, getAuthenticatedClient } from './gmail/auth';
+export { getConnectionOptions } from './queues/index';

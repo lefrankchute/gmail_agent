@@ -1,0 +1,147 @@
+import { Queue, Worker, type Job } from 'bullmq';
+import { EmailAction as DBEmailAction } from '@prisma/client';
+import {
+  QUEUE_NAMES,
+  type EmailJob,
+  type ClassifiedEmailJob,
+  type TransactionJobData,
+  type UrgentNotificationData,
+} from '@gmail-agent/shared';
+import { prisma } from '../db/prisma';
+import { applyQuickRules } from '../rules/quick-rules';
+import { classifyWithClaude } from '../classifier/claude-classifier';
+import { analyzeBankEmail } from '../classifier/bank-classifier';
+import { detectAirlineTicket } from '../classifier/airline-classifier';
+
+function getConnectionOptions(): { host: string; port: number } {
+  const url = new URL(process.env.REDIS_URL ?? 'redis://localhost:6379');
+  return { host: url.hostname, port: parseInt(url.port || '6379') };
+}
+
+export function startClassifierWorker(): void {
+  const conn = getConnectionOptions();
+
+  const classifiedQueue = new Queue<ClassifiedEmailJob>(QUEUE_NAMES.EMAIL_CLASSIFIED, {
+    connection: conn,
+  });
+  const transactionQueue = new Queue<TransactionJobData>(QUEUE_NAMES.TRANSACTION_NEW, {
+    connection: conn,
+  });
+  const urgentQueue = new Queue<UrgentNotificationData>(QUEUE_NAMES.NOTIFICATION_URGENT, {
+    connection: conn,
+  });
+
+  const worker = new Worker<EmailJob>(
+    QUEUE_NAMES.EMAIL_NEW,
+    async (job: Job<EmailJob>) => {
+      const email = job.data;
+
+      // Dedup check — second line of defense after Redis set in ingestion
+      const existing = await prisma.email.findUnique({ where: { id: email.id } });
+      if (existing) {
+        console.log(`[classifier] Skip duplicate: ${email.id}`);
+        return;
+      }
+
+      // Step 1: classify (quick rules first, Claude if no match)
+      let classification = await applyQuickRules(email);
+      if (!classification) {
+        classification = await classifyWithClaude(email);
+      }
+
+      const category = classification.category.toLowerCase();
+      let transactionData: TransactionJobData | undefined;
+      let isUrgentBank = false;
+
+      // Step 2: deep analysis for banks overrides the initial classification
+      if (category === 'banco') {
+        const bankResult = await analyzeBankEmail(email);
+        classification = bankResult.classification;
+        transactionData = bankResult.transactionData;
+        isUrgentBank = bankResult.isUrgent;
+      }
+
+      // Step 3: airline ticket detection — publish urgent if confirmed ticket found
+      if (category === 'aerolínea' || category === 'aerolinea') {
+        const flightData = await detectAirlineTicket(email);
+        if (flightData) {
+          await urgentQueue.add(
+            'airline',
+            {
+              emailId: email.id,
+              type: 'airline_ticket',
+              subject: email.subject,
+              sender: email.sender,
+              flightData,
+            },
+            { priority: 1 }
+          );
+        }
+      }
+
+      // Fraud / card-blocked alert
+      if (isUrgentBank) {
+        await urgentQueue.add(
+          'fraud',
+          { emailId: email.id, type: 'fraud', subject: email.subject, sender: email.sender },
+          { priority: 1 }
+        );
+      }
+
+      // Persist to DB
+      await prisma.email.create({
+        data: {
+          id: email.id,
+          threadId: email.threadId,
+          subject: email.subject,
+          sender: email.sender,
+          senderDomain: email.senderDomain,
+          receivedAt: new Date(email.receivedAt),
+          labels: email.labels,
+          action: classification.action as DBEmailAction,
+          category: classification.category,
+          subCategory: classification.subCategory ?? null,
+          confidence: classification.confidence,
+          reasoning: classification.reasoning,
+          isHistorical: false,
+        },
+      });
+
+      // Tell email-ingestion which Gmail action to execute
+      await classifiedQueue.add('execute', {
+        emailId: email.id,
+        action: classification.action,
+      });
+
+      // Queue for financial-service (Phase 4)
+      if (transactionData) {
+        await transactionQueue.add('extract', transactionData);
+      }
+
+      await prisma.processLog.create({
+        data: {
+          service: 'classifier-agent',
+          level: 'info',
+          message: `Classified: ${email.subject.slice(0, 80)}`,
+          metadata: {
+            emailId: email.id,
+            action: classification.action,
+            category: classification.category,
+            confidence: classification.confidence,
+          },
+        },
+      });
+
+      console.log(
+        `[classifier] ${email.id} → ${classification.action} | ${classification.category} | ${(classification.confidence * 100).toFixed(0)}%`
+      );
+    },
+    { connection: conn, concurrency: 3 }
+  );
+
+  worker.on('failed', (job, err) => {
+    console.error(`[classifier] Job ${job?.id} failed: ${err.message}`);
+  });
+
+  console.log('[classifier] Classifier worker started');
+}

@@ -1,3 +1,9 @@
-import { EmailAction, ClassificationResult } from '@gmail-agent/shared';
+import dotenv from 'dotenv';
+import { resolve } from 'path';
+dotenv.config({ path: resolve(process.cwd(), '../../.env') });
 
-console.log('classifier-agent service starting...', EmailAction.UNCLASSIFIED);
+import { startClassifierWorker } from './workers/classifier.worker';
+
+console.log('[classifier-agent] Starting...');
+startClassifierWorker();
+console.log('[classifier-agent] Ready — listening on queue email:new');

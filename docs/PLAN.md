@@ -234,43 +234,43 @@ Se abre un asistente de 4 pasos:
 ### Entregables
 
 **2.1 — Gmail OAuth2 + lectura de correos**
-- [ ] Flujo OAuth2 implementado (genera y guarda refresh token)
-- [ ] Función para leer correos de la bandeja de entrada
-- [ ] Función para leer metadatos: remitente, asunto, etiquetas, snippet
-- [ ] Función para marcar como leído
-- [ ] Función para archivar
-- [ ] Función para obtener etiquetas existentes del usuario
+- [x] Flujo OAuth2 implementado (script `pnpm authorize:gmail` genera y guarda refresh token)
+- [x] Función para leer correos de la bandeja de entrada
+- [x] Función para leer metadatos: remitente, asunto, etiquetas, snippet
+- [x] Función para marcar como leído
+- [x] Función para archivar
+- [x] Función para obtener etiquetas existentes del usuario
 
 **2.2 — Email Ingestion Service**
-- [ ] Worker que hace polling cada 5 minutos (fallback)
-- [ ] Webhook endpoint para recibir push de Gmail Pub/Sub
-- [ ] Cola BullMQ `email:new` publicando emails nuevos
-- [ ] Deduplicación (no procesar el mismo email dos veces)
-- [ ] Logs de ingesta en tabla `process_logs`
+- [x] Worker que hace polling cada 5 minutos (fallback)
+- [x] Webhook endpoint para recibir push de Gmail Pub/Sub (`POST /webhook/gmail`)
+- [x] Cola BullMQ `email:new` publicando emails nuevos
+- [x] Deduplicación (Redis SET + check en tabla `emails`)
+- [x] Logs de procesamiento en tabla `process_logs` (escritos por classifier-agent)
 
 **2.3 — Agente Clasificador**
-- [ ] Integración con Claude API (Haiku para clasificación)
-- [ ] Sistema de reglas rápidas (sin llamada a Claude):
+- [x] Integración con Claude API (Haiku `claude-haiku-4-5-20251001`)
+- [x] Sistema de reglas rápidas (sin llamada a Claude):
   - Remitentes conocidos → acción directa
   - Etiquetas Gmail ya aplicadas → acción directa
-- [ ] Prompt del sistema con esquema de clasificación completo
-- [ ] Clasificación devuelve: `{ action, category, confidence, reasoning }`
-- [ ] Si `confidence < 0.7` → marcado como `UNCLASSIFIED`
-- [ ] Acciones ejecutadas automáticamente en Gmail post-clasificación
-- [ ] Resultados guardados en tabla `emails`
+- [x] Prompt del sistema con esquema de clasificación completo (en español)
+- [x] Clasificación devuelve: `{ action, category, confidence, reasoning }`
+- [x] Si `confidence < 0.7` → marcado como `UNCLASSIFIED`
+- [x] Acciones ejecutadas automáticamente en Gmail post-clasificación (vía cola `email:classified`)
+- [x] Resultados guardados en tabla `emails`
 
 **2.4 — Clasificación especial: Bancos**
-- [ ] Claude analiza contenido completo del email bancario
-- [ ] Subclasificación: `marketing | extracto_mensual | transaccion | fraude | otro`
-- [ ] `marketing` → ARCHIVE
-- [ ] `extracto_mensual` → SUMMARY
-- [ ] `transaccion` → PERSONAL + publicar en cola `transaction:new`
-- [ ] `fraude` → PERSONAL (prioridad máxima) + cola `notification:urgent`
+- [x] Claude analiza contenido completo del email bancario
+- [x] Subclasificación: `marketing | extracto_mensual | transaccion | fraude | otro`
+- [x] `marketing` → ARCHIVE
+- [x] `extracto_mensual` → SUMMARY
+- [x] `transaccion` → PERSONAL + publicar en cola `transaction:new`
+- [x] `fraude` → PERSONAL (prioridad máxima) + cola `notification:urgent`
 
 **2.5 — Clasificación especial: Aerolíneas**
-- [ ] Claude detecta si es tiquete/reserva confirmada
-- [ ] Extrae: origen, destino, fecha, número de reserva, aerolínea
-- [ ] Publica en cola `notification:urgent` con datos del vuelo
+- [x] Claude detecta si es tiquete/reserva confirmada
+- [x] Extrae: origen, destino, fecha, número de reserva, aerolínea
+- [x] Publica en cola `notification:urgent` con datos del vuelo
 
 **Criterio de éxito de Fase 2:**
 > Enviar un email de prueba a la cuenta de Gmail → en menos de 10 minutos aparece en la tabla `emails` con clasificación asignada y acción ejecutada. El log muestra el razonamiento de Claude.
