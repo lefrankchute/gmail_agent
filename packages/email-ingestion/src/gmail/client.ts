@@ -62,6 +62,80 @@ export class GmailClient {
       .filter(l => l.id && l.name)
       .map(l => ({ id: l.id!, name: l.name! }));
   }
+
+  async getAllLabels(): Promise<
+    Array<{ gmailId: string; name: string; type: string; isVisible: boolean }>
+  > {
+    const res = await this.gmail.users.labels.list({ userId: 'me' });
+    return (res.data.labels ?? [])
+      .filter(l => l.id && l.name)
+      .map(l => ({
+        gmailId: l.id!,
+        name: l.name!,
+        type: l.type ?? 'user',
+        isVisible: l.labelListVisibility !== 'labelHide',
+      }));
+  }
+
+  async listFilters(): Promise<
+    Array<{ gmailFilterId: string; criteria: object; actions: object }>
+  > {
+    const res = await this.gmail.users.settings.filters.list({ userId: 'me' });
+    return (res.data.filter ?? [])
+      .filter(f => f.id)
+      .map(f => ({
+        gmailFilterId: f.id!,
+        criteria: {
+          from: f.criteria?.from ?? null,
+          to: f.criteria?.to ?? null,
+          subject: f.criteria?.subject ?? null,
+          query: f.criteria?.query ?? null,
+        },
+        actions: {
+          addLabelIds: f.action?.addLabelIds ?? [],
+          removeLabelIds: f.action?.removeLabelIds ?? [],
+        },
+      }));
+  }
+
+  async createLabel(name: string): Promise<{ id: string; name: string }> {
+    const res = await this.gmail.users.labels.create({
+      userId: 'me',
+      requestBody: {
+        name,
+        labelListVisibility: 'labelShow',
+        messageListVisibility: 'show',
+      },
+    });
+    return { id: res.data.id!, name: res.data.name! };
+  }
+
+  async applyLabel(emailId: string, labelId: string): Promise<void> {
+    await this.gmail.users.messages.modify({
+      userId: 'me',
+      id: emailId,
+      requestBody: { addLabelIds: [labelId] },
+    });
+  }
+
+  async moveEmail(emailId: string, addLabelId: string, removeFromInbox = true): Promise<void> {
+    const removeLabelIds = ['UNREAD'];
+    if (removeFromInbox) removeLabelIds.push('INBOX');
+    await this.gmail.users.messages.modify({
+      userId: 'me',
+      id: emailId,
+      requestBody: { addLabelIds: [addLabelId], removeLabelIds },
+    });
+  }
+
+  async listUnreadInLabel(labelId: string, limit = 100): Promise<string[]> {
+    const res = await this.gmail.users.messages.list({
+      userId: 'me',
+      labelIds: [labelId, 'UNREAD'],
+      maxResults: limit,
+    });
+    return (res.data.messages ?? []).map(m => m.id!).filter(Boolean);
+  }
 }
 
 function getHeader(headers: gmail_v1.Schema$MessagePartHeader[], name: string): string | null {

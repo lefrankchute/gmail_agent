@@ -75,11 +75,26 @@ export interface EmailJob {
   receivedAt: string;
   body: string;
   bodyHtml?: string;
+  source?: 'polling' | 'label_scanner';
 }
 
 export interface ClassifiedEmailJob {
   emailId: string;
   action: EmailAction;
+  targetLabelName?: string;
+  source?: 'polling' | 'label_scanner';
+}
+
+export interface MoveProposalJob {
+  emailId: string;
+  targetLabelId: string;
+  targetLabelName: string;
+  reason: string;
+}
+
+export interface SendNotificationJob {
+  text: string;
+  parseMode?: 'Markdown' | 'HTML';
 }
 
 export interface TransactionJobData {
@@ -113,6 +128,7 @@ export interface UrgentNotificationData {
 export const QUEUE_NAMES = {
   EMAIL_NEW: 'email.new',
   EMAIL_CLASSIFIED: 'email.classified',
+  EMAIL_MOVE_PROPOSAL: 'email.move-proposal',
   TRANSACTION_NEW: 'transaction.new',
   NOTIFICATION_URGENT: 'notification.urgent',
   NOTIFICATION_SEND: 'notification.send',

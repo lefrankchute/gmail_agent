@@ -10,10 +10,17 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@gmail-agent/shared": "workspace:*"
+    "@anthropic-ai/sdk": "^0.55.1",
+    "@gmail-agent/shared": "workspace:*",
+    "@prisma/client": "^6.19.3",
+    "bullmq": "^5.77.6",
+    "dotenv": "^17.4.2",
+    "ioredis": "^5.11.0",
+    "node-cron": "^4.2.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11",
     "rimraf": "^6.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.8.0"

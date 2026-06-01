@@ -100,6 +100,36 @@ model ProcessLog {
   @@map("process_logs")
 }
 
+model ErrorLog {
+  id        String   @id @default(uuid())
+  service   String
+  error     String
+  stack     String?
+  context   Json?
+  createdAt DateTime @default(now())
+
+  @@map("error_logs")
+}
+
+model GmailLabel {
+  gmailId   String   @id
+  name      String
+  type      String   // "system" | "user"
+  isVisible Boolean  @default(true)
+  syncedAt  DateTime @default(now())
+
+  @@map("gmail_labels")
+}
+
+model GmailFilter {
+  gmailFilterId String   @id
+  criteria      Json     // { from?, to?, subject?, query? }
+  actions       Json     // { addLabelIds?, removeLabelIds? }
+  syncedAt      DateTime @default(now())
+
+  @@map("gmail_filters")
+}
+
 enum EmailAction {
   PERSONAL
   SUMMARY

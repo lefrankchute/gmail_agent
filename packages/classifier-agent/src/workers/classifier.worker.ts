@@ -2,6 +2,7 @@ import { Queue, Worker, UnrecoverableError, type Job } from 'bullmq';
 import { EmailAction as DBEmailAction } from '@prisma/client';
 import {
   QUEUE_NAMES,
+  EmailAction,
   type EmailJob,
   type ClassifiedEmailJob,
   type TransactionJobData,
@@ -20,6 +21,10 @@ function getConnectionOptions(): { host: string; port: number } {
 }
 
 export function startClassifierWorker(): void {
+  // Load user labels in background (non-blocking); refresh every hour
+  refreshLabelCache().catch(() => {});
+  setInterval(() => refreshLabelCache().catch(() => {}), 60 * 60 * 1000);
+
   const conn = getConnectionOptions();
 
   const classifiedQueue = new Queue<ClassifiedEmailJob>(QUEUE_NAMES.EMAIL_CLASSIFIED, {
@@ -113,6 +118,8 @@ export function startClassifierWorker(): void {
       await classifiedQueue.add('execute', {
         emailId: email.id,
         action: classification.action,
+        targetLabelName: getTargetLabelName(classification.action as EmailAction, classification.category),
+        source: email.source ?? 'polling',
       });
 
       // Queue for financial-service (Phase 4)
@@ -152,4 +159,89 @@ export function startClassifierWorker(): void {
   });
 
   console.log('[classifier] Classifier worker started');
+}
+
+// --- User label cache (loaded at startup, refreshed every hour) ---
+let cachedUserLabels: string[] = [];
+
+async function refreshLabelCache(): Promise<void> {
+  try {
+    const rows = await prisma.gmailLabel.findMany({
+      where: { type: 'user', isVisible: true },
+      select: { name: true },
+    });
+    cachedUserLabels = rows.map(r => r.name);
+  } catch {
+    // DB might not be ready yet on first boot — keep existing cache
+  }
+}
+
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  banco: ['banco', 'bancos'],
+  aerolínea: ['aerolinea', 'aerol'],
+  aerolinea: ['aerolinea', 'aerol'],
+  compras: ['compra', 'compras', 'shopping'],
+  trabajo: ['trabajo', 'empleo'],
+  redes_sociales: ['redes', 'social'],
+  personal: ['personal'],
+  suscripción: ['suscripci', 'newsletter'],
+  suscripcion: ['suscripci', 'newsletter'],
+  gobierno: ['gobierno'],
+  otro: [],
+};
+
+const CATEGORY_FALLBACK: Record<string, string> = {
+  banco: 'bancos',
+  aerolínea: 'aerolíneas',
+  aerolinea: 'aerolíneas',
+  compras: 'compras',
+  trabajo: 'trabajo',
+  redes_sociales: 'redes_sociales',
+  personal: 'personal',
+  suscripción: 'suscripciones',
+  suscripcion: 'suscripciones',
+  gobierno: 'gobierno',
+  otro: 'otro',
+};
+
+function normalizeStr(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function findBestUserLabel(category: string): string | null {
+  const keywords = CATEGORY_KEYWORDS[category.toLowerCase()];
+  if (!keywords?.length || !cachedUserLabels.length) return null;
+
+  // Pass 1: standalone top-level labels (no '/')
+  const topLevel = cachedUserLabels.filter(n => !n.includes('/'));
+  for (const kw of keywords) {
+    const match = topLevel.find(n => normalizeStr(n).includes(kw));
+    if (match) return match;
+  }
+
+  // Pass 2: match via the parent portion of hierarchical labels (e.g. "Aerolíneas/Ryanair" → "Aerolíneas")
+  // Gmail always creates parent labels, so the parent name IS a valid Gmail label
+  for (const kw of keywords) {
+    const child = cachedUserLabels.find(n => {
+      const parent = n.split('/')[0];
+      return normalizeStr(parent).includes(kw);
+    });
+    if (child) return child.split('/')[0]; // return parent label name
+  }
+
+  return null;
+}
+
+function getTargetLabelName(action: EmailAction, category: string): string {
+  if (action === EmailAction.UNCLASSIFIED) return 'Agente/pendiente';
+  if (action === EmailAction.SUMMARY) return 'Agente/resúmenes';
+
+  const cat = action === EmailAction.PERSONAL ? 'personal' : category;
+  const userLabel = findBestUserLabel(cat);
+  if (userLabel) return userLabel;
+
+  // Fallback: Agente/* labels (created at action worker startup)
+  if (action === EmailAction.PERSONAL) return 'Agente/personal';
+  const suffix = CATEGORY_FALLBACK[category.toLowerCase()] ?? 'otro';
+  return `Agente/${suffix}`;
 }

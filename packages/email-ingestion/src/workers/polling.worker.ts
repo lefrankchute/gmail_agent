@@ -6,8 +6,7 @@ import { GmailClient } from '../gmail/client';
 import { getAuthenticatedClient } from '../gmail/auth';
 
 const PROCESSED_SET = 'gmail:processed_emails';
-const POLL_INTERVAL_MS = 5 * 60 * 1000;
-// Fetch the N most recent inbox messages per cycle. Redis dedup prevents reprocessing.
+const POLL_INTERVAL_MS = parseInt(process.env.POLLING_INTERVAL_MIN ?? '5') * 60 * 1000;
 const FETCH_LIMIT = 200;
 
 export async function startPollingWorker(): Promise<void> {
@@ -53,5 +52,5 @@ export async function startPollingWorker(): Promise<void> {
 
   await poll();
   setInterval(poll, POLL_INTERVAL_MS);
-  console.log('[polling] Started — interval: 5 minutes');
+  console.log(`[polling] Started — interval: ${process.env.POLLING_INTERVAL_MIN ?? 5} minutes`);
 }
