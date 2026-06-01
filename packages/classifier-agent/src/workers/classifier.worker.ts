@@ -68,8 +68,10 @@ export function startClassifierWorker(): void {
         isUrgentBank = bankResult.isUrgent;
       }
 
+      const isHistorical = email.source === 'historical';
+
       // Step 3: airline ticket detection — publish urgent if confirmed ticket found
-      if (category === 'aerolínea' || category === 'aerolinea') {
+      if (!isHistorical && (category === 'aerolínea' || category === 'aerolinea')) {
         const flightData = await detectAirlineTicket(email);
         if (flightData) {
           await urgentQueue.add(
@@ -86,8 +88,8 @@ export function startClassifierWorker(): void {
         }
       }
 
-      // Fraud / card-blocked alert
-      if (isUrgentBank) {
+      // Fraud / card-blocked alert (skip for historical to avoid retroactive spam)
+      if (!isHistorical && isUrgentBank) {
         await urgentQueue.add(
           'fraud',
           { emailId: email.id, type: 'fraud', subject: email.subject, sender: email.sender },
@@ -110,7 +112,7 @@ export function startClassifierWorker(): void {
           subCategory: classification.subCategory ?? null,
           confidence: classification.confidence,
           reasoning: classification.reasoning,
-          isHistorical: false,
+          isHistorical,
         },
       });
 

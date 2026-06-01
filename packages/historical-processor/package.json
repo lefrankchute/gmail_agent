@@ -5,12 +5,18 @@
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@gmail-agent/shared": "workspace:*"
+    "@gmail-agent/shared": "workspace:*",
+    "@prisma/client": "^6.19.3",
+    "bullmq": "^5.0.0",
+    "dotenv": "^16.0.0",
+    "googleapis": "^144.0.0",
+    "ioredis": "^5.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

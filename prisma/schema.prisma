@@ -130,6 +130,18 @@ model GmailFilter {
   @@map("gmail_filters")
 }
 
+model HistoricalJob {
+  id            String    @id @default(uuid())
+  status        String    // 'running' | 'completed' | 'failed'
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  totalQueued   Int       @default(0)
+  errors        Int       @default(0)
+  lastPageToken String?
+
+  @@map("historical_jobs")
+}
+
 enum EmailAction {
   PERSONAL
   SUMMARY

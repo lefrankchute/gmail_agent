@@ -75,14 +75,14 @@ export interface EmailJob {
   receivedAt: string;
   body: string;
   bodyHtml?: string;
-  source?: 'polling' | 'label_scanner';
+  source?: 'polling' | 'label_scanner' | 'historical';
 }
 
 export interface ClassifiedEmailJob {
   emailId: string;
   action: EmailAction;
   targetLabelName?: string;
-  source?: 'polling' | 'label_scanner';
+  source?: 'polling' | 'label_scanner' | 'historical';
 }
 
 export interface MoveProposalJob {

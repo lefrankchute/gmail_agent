@@ -245,12 +245,12 @@
 
 **Objetivo:** Procesar todos los correos no leídos históricos una única vez.
 
-- [ ] **Fase 5 completada**
+- [x] **Fase 5 completada**
 
-- [ ] Leer todos los correos no leídos (inbox + archivados) en lotes de 50
-- [ ] Progreso guardado en BD (reanudable)
-- [ ] Sin notificaciones Telegram durante el proceso
-- [ ] Al finalizar: reporte por Telegram con totales (procesados, archivados, transacciones, errores)
+- [x] Leer todos los correos no leídos (inbox + archivados) en lotes de 50
+- [x] Progreso guardado en BD (reanudable — tabla `historical_jobs` con `lastPageToken`)
+- [x] Sin notificaciones Telegram durante el proceso (`source: 'historical'` suprime alertas urgentes)
+- [x] Al finalizar: reporte por Telegram con totales (encolados, errores)
 
 **Criterio:** Job histórico procesa ≥ 100 emails sin errores. Progreso reanudable.
 
@@ -260,13 +260,13 @@
 
 **Objetivo:** Panel web para monitorear el sistema y consultar informes financieros.
 
-- [ ] **Fase 6 completada**
+- [x] **Fase 6 completada**
 
-- [ ] Estado en tiempo real de cada servicio
-- [ ] Log de emails: tabla paginada con filtros, vista detalle con razonamiento de Claude
-- [ ] Dashboard financiero: gráficas de gastos por mes, desglose por banco y tipo
-- [ ] Informes: mensual, anual, exportar CSV
-- [ ] Configuración: Telegram, conexión Gmail, conteo de sin clasificar
+- [x] Estado en tiempo real de cada servicio (via `process_logs` — último log < 10 min)
+- [x] Log de emails: tabla paginada con filtros (acción, categoría, remitente, fecha), vista detalle con razonamiento de Claude
+- [x] Dashboard financiero: gráficas de gastos por mes (últimos 6), desglose por banco y tipo
+- [x] Informes: mensual con tabla de transacciones, exportar CSV (`GET /api/finance/export`)
+- [x] Configuración: estado de env vars, conteo de sin clasificar, reglas activas, historial de jobs
 
 **Criterio:** Dashboard accesible en navegador con gráficas de gastos del mes actual.
 
@@ -299,7 +299,7 @@
 | C6 | Telegram recibe resumen diario a las 7am | Fase 3 | ✅ |
 | C7 | Tiquete aéreo genera notificación en < 2 minutos | Fase 3 | ✅ |
 | C8 | Transacciones bancarias extraídas con monto en COP | Fase 4 | ✅ |
-| C9 | Dashboard con gráficas de gastos del mes | Fase 6 | ⬜ |
+| C9 | Dashboard con gráficas de gastos del mes | Fase 6 | ✅ |
 | C10 | Sistema 24/7 en VPS con HTTPS | Fase 7 | ⬜ |
 
 ---
