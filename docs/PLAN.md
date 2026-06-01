@@ -219,23 +219,23 @@
 
 **Objetivo:** Los correos de bancos alimentan un registro financiero con balance mensual.
 
-- [ ] **Fase 4 completada**
+- [x] **Fase 4 completada**
 
 ### 4.1 — Extractor de transacciones (Claude Sonnet)
-- [ ] Extrae: banco, monto, moneda, equivalente COP, tipo de cuenta, comercio, fecha, tipo de movimiento
-- [ ] Aplica a: Bancos + PSE + Nequi + PayPal + Wompi + Global66
-- [ ] Tasa de cambio del día desde API gratuita
-- [ ] Guarda en tabla `transactions`, detecta duplicados
+- [x] Extrae: banco, monto, moneda, equivalente COP, tipo de cuenta, comercio, fecha, tipo de movimiento
+- [x] Aplica a: Bancos + PSE + Nequi + PayPal + Wompi + Global66
+- [x] Tasa de cambio del día desde API gratuita
+- [x] Guarda en tabla `transactions`, detecta duplicados
 
 ### 4.2 — Financial Service API
-- [ ] `GET /financial/transactions` — lista paginada y filtrable
-- [ ] `GET /financial/balance/:year/:month` — balance mensual
-- [ ] `GET /financial/summary/by-bank` y `by-type`
+- [x] `GET /financial/transactions` — lista paginada y filtrable
+- [x] `GET /financial/balance/:year/:month` — balance mensual
+- [x] `GET /financial/summary/by-bank` y `by-type`
 
 ### 4.3 — Balance mensual (cron 1ro de cada mes, 7:00am)
-- [ ] Totales por banco, tipo de cuenta, categoría
-- [ ] Guardado en `monthly_reports`
-- [ ] Enviado por Telegram
+- [x] Totales por banco, tipo de cuenta, categoría
+- [x] Guardado en `monthly_reports`
+- [x] Enviado por Telegram
 
 **Criterio:** Email de alerta de compra → aparece en `transactions` con monto COP. Endpoint de balance devuelve datos agrupados.
 
@@ -298,7 +298,7 @@
 | C5 | Reglas de archivado aprendidas por dominio | Fase 2 | ✅ |
 | C6 | Telegram recibe resumen diario a las 7am | Fase 3 | ✅ |
 | C7 | Tiquete aéreo genera notificación en < 2 minutos | Fase 3 | ✅ |
-| C8 | Transacciones bancarias extraídas con monto en COP | Fase 4 | ⬜ |
+| C8 | Transacciones bancarias extraídas con monto en COP | Fase 4 | ✅ |
 | C9 | Dashboard con gráficas de gastos del mes | Fase 6 | ⬜ |
 | C10 | Sistema 24/7 en VPS con HTTPS | Fase 7 | ⬜ |
 

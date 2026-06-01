@@ -135,10 +135,34 @@ importers:
       '@gmail-agent/shared':
         specifier: workspace:*
         version: link:../shared
+      '@prisma/client':
+        specifier: ^6.19.3
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      bullmq:
+        specifier: ^5.77.6
+        version: 5.77.6
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+      express:
+        specifier: ^4.22.2
+        version: 4.22.2
+      ioredis:
+        specifier: ^5.11.0
+        version: 5.11.0
+      node-cron:
+        specifier: ^4.2.1
+        version: 4.2.1
     devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.19
+      '@types/node-cron':
+        specifier: ^3.0.11
+        version: 3.0.11
       rimraf:
         specifier: ^6.0.0
         version: 6.1.3
